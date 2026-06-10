@@ -1,0 +1,58 @@
+
+#Python
+
+pycache/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+#Environments
+
+.venv/
+venv/
+.env
+
+#Build outputs
+
+build/
+dist/
+
+#Local outputs
+
+outputs/
+local/
+tmp/
+
+# Python caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Test/lint caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Build artefacts
+build/
+dist/
+*.egg-info/
+
+# Local environments
+.venv/
+venv/
+.env
+
+# Generated outputs
+outputs/
+
+# Editor/OS files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

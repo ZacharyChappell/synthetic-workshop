@@ -1,0 +1,62 @@
+schema_version: "0.1"
+
+scene:
+  id: curved_elliptic_tube
+  description: Curved elliptic target tube with asymmetric scalar profile and an analysis-support neighbour.
+
+grid:
+  shape: [40, 40, 40]
+  spacing: [1.0, 1.0, 1.0]
+
+composition:
+  label_mode: priority
+  scalar_blend: overwrite
+  overlap_policy: warn
+
+mask_rules:
+  target_roles: [target]
+  analysis_roles: [target, analysis_support]
+
+objects:
+  - id: target
+    kind: tube
+    role: target
+    label: 1
+    priority: 10
+    map_name: fa_like
+    curve:
+      kind: sinusoidal
+      start_mm: [8.0, 20.0, 20.0]
+      end_mm: [32.0, 20.0, 20.0]
+      amplitude_mm: [0.0, 5.0, 0.0]
+      periods: 1.0
+      step_mm: 1.0
+    cross_section:
+      kind: ellipse
+      semi_axis_u_mm: 4.0
+      semi_axis_v_mm: 2.0
+    profile:
+      kind: asymmetric_linear
+      centre_value: 1.0
+      edge_value: 0.25
+      asymmetry: 0.1
+      background_value: 0.0
+
+  - id: support_neighbour
+    kind: tube
+    role: analysis_support
+    label: 2
+    priority: 1
+    map_name: fa_like
+    curve:
+      kind: line
+      start_mm: [8.0, 28.0, 20.0]
+      end_mm: [32.0, 28.0, 20.0]
+      step_mm: 1.0
+    cross_section:
+      kind: circle
+      radius_mm: 2.0
+    profile:
+      kind: constant
+      value: 0.45
+      background_value: 0.0

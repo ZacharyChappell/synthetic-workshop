@@ -1,0 +1,49 @@
+schema_version: "0.1"
+
+scene:
+  id: cone_frustum_scene
+  description: Independent analytic cone and frustum objects.
+
+grid:
+  shape: [32, 32, 32]
+  spacing: [1.0, 1.0, 1.0]
+
+composition:
+  label_mode: priority
+  scalar_blend: overwrite
+  overlap_policy: allow
+
+objects:
+  - id: cone_inclusion
+    kind: cone
+    role: inclusion
+    label: 5
+    priority: 10
+    map_name: qsm_like
+    apex_mm: [6.0, 16.0, 16.0]
+    axis: i
+    axis_direction: 1
+    height_mm: 12.0
+    base_radius_mm: 4.0
+    profile:
+      kind: constant
+      value: 2.0
+      background_value: 0.0
+
+  - id: tapered_environment
+    kind: frustum
+    role: environment
+    label: 6
+    priority: 1
+    map_name: wm_pve_like
+    start_mm: [24.0, 16.0, 16.0]
+    axis: i
+    axis_direction: -1
+    height_mm: 12.0
+    radius_start_mm: 2.0
+    radius_end_mm: 4.0
+    profile:
+      kind: linear_radial
+      centre_value: 1.0
+      edge_value: 0.2
+      background_value: 0.0

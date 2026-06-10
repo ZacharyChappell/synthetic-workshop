@@ -1,0 +1,50 @@
+schema_version: "0.1"
+
+scene:
+  id: tube_with_slab_environment
+  description: Target tube with an independent slab/sheet-like environment compartment.
+
+grid:
+  shape: [40, 40, 40]
+  spacing: [1.0, 1.0, 1.0]
+
+composition:
+  label_mode: priority
+  scalar_blend: overwrite
+  overlap_policy: allow
+
+objects:
+  - id: target
+    kind: tube
+    role: target
+    label: 1
+    priority: 10
+    map_name: fa_like
+    curve:
+      kind: line
+      start_mm: [8.0, 20.0, 20.0]
+      end_mm: [32.0, 20.0, 20.0]
+      step_mm: 1.0
+    cross_section:
+      kind: circle
+      radius_mm: 3.0
+    profile:
+      kind: linear_radial
+      centre_value: 1.0
+      edge_value: 0.2
+      background_value: 0.0
+
+  - id: gm_like_sheet
+    kind: slab
+    role: environment
+    label: 4
+    priority: 1
+    map_name: wm_pve_like
+    centre_mm: [20.0, 11.0, 20.0]
+    normal_axis: j
+    thickness_mm: 3.0
+    half_extent_mm: [15.0, 8.0]
+    profile:
+      kind: constant
+      value: 0.5
+      background_value: 0.0
