@@ -1,5 +1,7 @@
 # synthetic-workshop
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20626240.svg)](https://doi.org/10.5281/zenodo.20626240)
+
 `synthetic-workshop` is a Python package for generating analytic synthetic 2D/3D image scenes for image-method validation.
 
 The package renders reproducible scenes with known geometry, object masks, scalar fields, centrelines, frames, topology, distance-like maps, composition metadata, plotting outputs, and export-ready 

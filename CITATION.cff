@@ -7,6 +7,7 @@ authors:
     given-names: "Zachary"
     orcid: "https://orcid.org/0000-0001-8438-6374"
 version: "0.1.0-alpha.1"
+doi: "10.5281/zenodo.20626240"
 date-released: 2026-06-10
 license: MIT
 repository-code: "https://github.com/ZacharyChappell/synthetic-workshop"
