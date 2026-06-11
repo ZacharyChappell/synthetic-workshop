@@ -18,6 +18,7 @@ from synthworkshop.cross_sections import (
     VariableEllipticCrossSection,
 )
 from synthworkshop.grid import GridSpec
+from synthworkshop.perturbations import apply_perturbations
 from synthworkshop.primitives.curves import LineCurve, SinusoidalCurve
 from synthworkshop.primitives.implicit import (
     ConeObject,
@@ -107,6 +108,7 @@ class SceneSpec:
     composition: CompositionRules = field(default_factory=CompositionRules)
     mask_rules: MaskRules = field(default_factory=MaskRules)
     render: Mapping[str, Any] = field(default_factory=dict)
+    perturbations: tuple[Mapping[str, Any], ...] = field(default_factory=tuple)
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -119,6 +121,11 @@ class SceneSpec:
         object.__setattr__(self, "schema_version", str(self.schema_version))
         object.__setattr__(self, "objects", tuple(self.objects))
         object.__setattr__(self, "render", dict(self.render))
+        object.__setattr__(
+            self,
+            "perturbations",
+            tuple(_perturbations_from_config(self.perturbations)),
+        )
         object.__setattr__(self, "metadata", dict(self.metadata))
 
 
@@ -146,6 +153,22 @@ def _optional_mapping(
     if value is None:
         return {}
     return _as_mapping(value, name=key)
+
+
+def _perturbations_from_config(value: Any) -> tuple[Mapping[str, Any], ...]:
+    """Validate perturbation specifications from config."""
+
+    if value is None:
+        return ()
+    if not isinstance(value, Sequence) or isinstance(value, (str, bytes)):
+        raise ValueError("perturbations must be a sequence of mappings.")
+
+    perturbations: list[Mapping[str, Any]] = []
+    for index, item in enumerate(value):
+        if not isinstance(item, Mapping):
+            raise ValueError(f"perturbations[{index}] must be a mapping/object.")
+        perturbations.append(dict(item))
+    return tuple(perturbations)
 
 
 def _required_mapping(
@@ -932,6 +955,7 @@ def scene_spec_from_dict(payload: Mapping[str, Any]) -> SceneSpec:
         composition=_composition_from_config(_optional_mapping(payload, "composition")),
         mask_rules=_mask_rules_from_config(_optional_mapping(payload, "mask_rules")),
         render=_render_kwargs(_optional_mapping(payload, "render")),
+        perturbations=_perturbations_from_config(payload.get("perturbations", ())),
         metadata={
             "source_scene_section": dict(scene_meta),
             **dict(_optional_mapping(payload, "metadata")),
@@ -972,6 +996,7 @@ def scene_spec_to_dict(spec: SceneSpec) -> dict[str, Any]:
             "analysis_roles": [role.value for role in spec.mask_rules.analysis_roles],
         },
         "render": dict(spec.render),
+        "perturbations": [dict(item) for item in spec.perturbations],
         "metadata": dict(spec.metadata),
     }
 
@@ -997,7 +1022,7 @@ def render_scene_from_spec(spec: SceneSpec) -> RenderedScene:
             "scene_id": spec.scene_id,
         },
     )
-    return scene
+    return apply_perturbations(scene, spec.perturbations)
 
 
 def render_scene_from_dict(payload: Mapping[str, Any]) -> RenderedScene:
