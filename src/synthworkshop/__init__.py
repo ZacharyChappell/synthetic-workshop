@@ -88,7 +88,7 @@ from synthworkshop.topology import (
     sample_graph_edges,
 )
 
-version = "0.1.0"
+version = "0.1.0a1"
 __version__ = version
 
 __all__ = [
