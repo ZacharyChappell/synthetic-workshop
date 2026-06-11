@@ -800,3 +800,110 @@ def test_scene_config_supports_periodic_longitudinal_profile() -> None:
     profile = scene.object_metadata["target"].metadata["profile"]
     assert profile["kind"] == "periodic_longitudinal"
     assert profile["length_mm"] > 0.0
+
+
+def test_scene_spec_from_dict_parses_perturbations() -> None:
+    payload = _basic_payload()
+    payload["perturbations"] = [
+        {
+            "kind": "intensity_scaling",
+            "factor": 2.0,
+            "map_names": ["fa_like"],
+        }
+    ]
+
+    spec = scene_spec_from_dict(payload)
+    summary = scene_spec_to_dict(spec)
+
+    assert spec.perturbations == (
+        {
+            "kind": "intensity_scaling",
+            "factor": 2.0,
+            "map_names": ["fa_like"],
+        },
+    )
+    assert summary["perturbations"][0]["kind"] == "intensity_scaling"
+
+
+def test_render_scene_from_dict_applies_perturbations() -> None:
+    payload = _basic_payload()
+    payload["objects"][0]["profile"] = {
+        "kind": "constant",
+        "value": 1.0,
+        "background_value": 0.0,
+    }
+    payload["perturbations"] = [
+        {
+            "kind": "intensity_scaling",
+            "factor": 2.0,
+            "map_names": ["fa_like"],
+        }
+    ]
+
+    scene = render_scene_from_dict(payload)
+
+    assert np.isclose(scene.scalar_maps["fa_like"][9, 9, 9], 2.0)
+    assert "001_intensity_scaling" in scene.truth.perturbations
+    assert scene.metadata["perturbations"][0]["name"] == "intensity_scaling"
+    assert scene.metadata["scene_spec"]["perturbations"][0]["kind"] == (
+        "intensity_scaling"
+    )
+
+
+def test_render_scene_from_path_yaml_applies_perturbations(tmp_path: Path) -> None:
+    path = tmp_path / "perturbed_scene.yml"
+    path.write_text(
+        """
+schema_version: "0.1"
+scene:
+  id: yaml_perturbed_scene
+grid:
+  shape: [18, 18, 18]
+  spacing: [1.0, 1.0, 1.0]
+objects:
+  - id: target
+    kind: tube
+    role: target
+    label: 1
+    priority: 10
+    map_name: fa_like
+    curve:
+      kind: line
+      start_mm: [4.0, 9.0, 9.0]
+      end_mm: [14.0, 9.0, 9.0]
+    cross_section:
+      kind: circle
+      radius_mm: 2.0
+    profile:
+      kind: constant
+      value: 1.0
+      background_value: 0.0
+perturbations:
+  - kind: intensity_scaling
+    factor: 2.0
+    map_names: [fa_like]
+""",
+        encoding="utf-8",
+    )
+
+    scene = render_scene_from_path(path)
+
+    assert scene.metadata["scene_id"] == "yaml_perturbed_scene"
+    assert np.isclose(scene.scalar_maps["fa_like"][9, 9, 9], 2.0)
+    assert "001_intensity_scaling" in scene.truth.perturbations
+
+
+def test_invalid_perturbation_section_raises() -> None:
+    payload = _basic_payload()
+    payload["perturbations"] = {"kind": "intensity_scaling"}
+
+    with pytest.raises(ValueError, match="perturbations"):
+        scene_spec_from_dict(payload)
+
+
+def test_unknown_perturbation_kind_from_config_raises() -> None:
+    payload = _basic_payload()
+    payload["perturbations"] = [{"kind": "does_not_exist"}]
+
+    with pytest.raises(ValueError, match="Unknown perturbation kind"):
+        render_scene_from_dict(payload)
