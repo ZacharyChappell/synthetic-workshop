@@ -133,3 +133,28 @@ def test_apply_effect_rejects_non_mapping_specification() -> None:
 
     with pytest.raises(TypeError, match="mapping"):
         apply_effect(scene, ["not", "a", "mapping"])  # type: ignore[arg-type]
+
+
+def test_apply_effect_dispatches_width_and_profile_support_effects() -> None:
+    scene = _scene()
+
+    widened = apply_effect(
+        scene,
+        {
+            "kind": "width_expansion",
+            "object_id": "target",
+            "iterations": 1,
+        },
+    )
+    assert "001_width_expansion" in widened.truth.metadata["effects"]
+
+    rimmed = apply_effect(
+        scene,
+        {
+            "kind": "rim_enhancement",
+            "object_id": "target",
+            "map_name": "scalar",
+            "delta": 0.5,
+        },
+    )
+    assert "001_rim_enhancement" in rimmed.truth.metadata["effects"]
