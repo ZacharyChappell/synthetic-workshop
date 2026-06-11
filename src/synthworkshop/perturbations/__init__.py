@@ -1,5 +1,11 @@
 """Controlled perturbations for rendered synthetic scenes."""
 
+from synthworkshop.perturbations.apply import (
+    PERTURBATION_REGISTRY,
+    apply_perturbation,
+    apply_perturbations,
+    available_perturbations,
+)
 from synthworkshop.perturbations.base import PerturbationRecord
 from synthworkshop.perturbations.intensity import (
     add_linear_bias_field,
@@ -23,11 +29,15 @@ from synthworkshop.perturbations.spatial import (
 )
 
 __all__ = [
+    "PERTURBATION_REGISTRY",
     "PerturbationRecord",
     "add_gaussian_noise",
     "add_linear_bias_field",
     "add_mask_contamination",
     "add_mask_holes",
+    "apply_perturbation",
+    "apply_perturbations",
+    "available_perturbations",
     "break_skeleton_masks",
     "dilate_masks",
     "erode_masks",
