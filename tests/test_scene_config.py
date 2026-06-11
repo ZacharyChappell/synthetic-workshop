@@ -921,3 +921,142 @@ def test_example_perturbed_tube_yaml_renders() -> None:
     ]
     assert scene.metadata["perturbations"][0]["name"] == "intensity_scaling"
     assert scene.metadata["perturbations"][1]["seed"] == 123
+
+
+def test_scene_spec_from_dict_parses_effects() -> None:
+    payload = _basic_payload()
+    payload["effects"] = [
+        {
+            "kind": "object_value_shift",
+            "object_id": "target",
+            "map_name": "fa_like",
+            "delta": 0.5,
+        }
+    ]
+
+    spec = scene_spec_from_dict(payload)
+    summary = scene_spec_to_dict(spec)
+
+    assert spec.effects == (
+        {
+            "kind": "object_value_shift",
+            "object_id": "target",
+            "map_name": "fa_like",
+            "delta": 0.5,
+        },
+    )
+    assert summary["effects"][0]["kind"] == "object_value_shift"
+
+
+def test_render_scene_from_dict_applies_effects() -> None:
+    payload = _basic_payload()
+    payload["objects"][0]["profile"] = {
+        "kind": "constant",
+        "value": 1.0,
+        "background_value": 0.0,
+    }
+    payload["effects"] = [
+        {
+            "kind": "object_value_shift",
+            "object_id": "target",
+            "map_name": "fa_like",
+            "delta": 0.5,
+        }
+    ]
+
+    scene = render_scene_from_dict(payload)
+
+    assert np.isclose(scene.scalar_maps["fa_like"][9, 9, 9], 1.5)
+    assert "001_object_value_shift" in scene.truth.metadata["effects"]
+    assert scene.metadata["effects"][0]["name"] == "object_value_shift"
+    assert scene.metadata["scene_spec"]["effects"][0]["kind"] == "object_value_shift"
+
+
+def test_effects_are_applied_before_perturbations() -> None:
+    payload = _basic_payload()
+    payload["objects"][0]["profile"] = {
+        "kind": "constant",
+        "value": 1.0,
+        "background_value": 0.0,
+    }
+    payload["effects"] = [
+        {
+            "kind": "object_value_shift",
+            "object_id": "target",
+            "map_name": "fa_like",
+            "delta": 0.5,
+        }
+    ]
+    payload["perturbations"] = [
+        {
+            "kind": "intensity_scaling",
+            "factor": 2.0,
+            "map_names": ["fa_like"],
+        }
+    ]
+
+    scene = render_scene_from_dict(payload)
+
+    assert np.isclose(scene.scalar_maps["fa_like"][9, 9, 9], 3.0)
+    assert "001_object_value_shift" in scene.truth.metadata["effects"]
+    assert "001_intensity_scaling" in scene.truth.perturbations
+
+
+def test_render_scene_from_path_yaml_applies_effects(tmp_path: Path) -> None:
+    path = tmp_path / "known_effect_scene.yml"
+    path.write_text(
+        """
+schema_version: "0.1"
+scene:
+  id: yaml_known_effect_scene
+grid:
+  shape: [18, 18, 18]
+  spacing: [1.0, 1.0, 1.0]
+objects:
+  - id: target
+    kind: tube
+    role: target
+    label: 1
+    priority: 10
+    map_name: fa_like
+    curve:
+      kind: line
+      start_mm: [4.0, 9.0, 9.0]
+      end_mm: [14.0, 9.0, 9.0]
+    cross_section:
+      kind: circle
+      radius_mm: 2.0
+    profile:
+      kind: constant
+      value: 1.0
+      background_value: 0.0
+effects:
+  - kind: object_value_shift
+    object_id: target
+    map_name: fa_like
+    delta: 0.5
+""",
+        encoding="utf-8",
+    )
+
+    scene = render_scene_from_path(path)
+
+    assert scene.metadata["scene_id"] == "yaml_known_effect_scene"
+    assert np.isclose(scene.scalar_maps["fa_like"][9, 9, 9], 1.5)
+    assert "001_object_value_shift" in scene.truth.metadata["effects"]
+
+
+def test_invalid_effects_section_raises() -> None:
+    payload = _basic_payload()
+    payload["effects"] = {"kind": "object_value_shift"}
+
+    with pytest.raises(ValueError, match="effects"):
+        scene_spec_from_dict(payload)
+
+
+def test_unknown_effect_kind_from_config_raises() -> None:
+    payload = _basic_payload()
+    payload["effects"] = [{"kind": "does_not_exist"}]
+
+    with pytest.raises(ValueError, match="Unknown effect kind"):
+        render_scene_from_dict(payload)
