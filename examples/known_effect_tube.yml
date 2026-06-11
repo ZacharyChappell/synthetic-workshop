@@ -1,0 +1,43 @@
+schema_version: "0.1"
+
+scene:
+  id: known_effect_tube
+  description: "Straight analytic tube with a localised known scalar effect."
+
+grid:
+  shape: [32, 32, 32]
+  spacing: [1.0, 1.0, 1.0]
+
+composition:
+  label_mode: priority
+  scalar_blend: overwrite
+  overlap_policy: allow
+
+objects:
+  - id: target
+    kind: tube
+    role: target
+    label: 1
+    priority: 10
+    map_name: scalar
+    curve:
+      kind: line
+      start_mm: [8.0, 16.0, 16.0]
+      end_mm: [24.0, 16.0, 16.0]
+      step_mm: 1.0
+    cross_section:
+      kind: circle
+      radius_mm: 3.0
+    profile:
+      kind: constant
+      value: 1.0
+      background_value: 0.0
+
+effects:
+  - kind: axis_interval_value_shift
+    object_id: target
+    map_name: scalar
+    delta: 0.4
+    axis: 0
+    start_mm: 14.0
+    end_mm: 18.0
