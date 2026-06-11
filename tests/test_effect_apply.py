@@ -158,3 +158,22 @@ def test_apply_effect_dispatches_width_and_profile_support_effects() -> None:
         },
     )
     assert "001_rim_enhancement" in rimmed.truth.metadata["effects"]
+
+
+def test_apply_effect_dispatches_localised_effects() -> None:
+    scene = _scene()
+
+    localised = apply_effect(
+        scene,
+        {
+            "kind": "axis_interval_value_shift",
+            "object_id": "target",
+            "map_name": "scalar",
+            "delta": 0.5,
+            "axis": 0,
+            "start_mm": 2.0,
+            "end_mm": 2.0,
+        },
+    )
+
+    assert "001_axis_interval_value_shift" in localised.truth.metadata["effects"]

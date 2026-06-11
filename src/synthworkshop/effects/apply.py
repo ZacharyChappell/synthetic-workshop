@@ -5,6 +5,10 @@ from __future__ import annotations
 from collections.abc import Callable, Iterable, Mapping
 from typing import Any
 
+from synthworkshop.effects.localised import (
+    add_axis_interval_value_shift,
+    add_branch_value_shift,
+)
 from synthworkshop.effects.morphology import (
     add_hollow_core_change,
     add_rim_enhancement,
@@ -46,6 +50,12 @@ EFFECT_REGISTRY: dict[str, EffectFunction] = {
     "add_rim_enhancement": add_rim_enhancement,
     "hollow_core_change": add_hollow_core_change,
     "add_hollow_core_change": add_hollow_core_change,
+    "axis_interval_value_shift": add_axis_interval_value_shift,
+    "longitudinal_local_value_shift": add_axis_interval_value_shift,
+    "add_axis_interval_value_shift": add_axis_interval_value_shift,
+    "branch_value_shift": add_branch_value_shift,
+    "branch_specific_value_shift": add_branch_value_shift,
+    "add_branch_value_shift": add_branch_value_shift,
 }
 
 
