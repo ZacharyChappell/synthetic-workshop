@@ -5,6 +5,12 @@ from __future__ import annotations
 from collections.abc import Callable, Iterable, Mapping
 from typing import Any
 
+from synthworkshop.effects.morphology import (
+    add_hollow_core_change,
+    add_rim_enhancement,
+    contract_object_width,
+    expand_object_width,
+)
 from synthworkshop.effects.scalar import (
     add_centre_value_shift,
     add_edge_value_shift,
@@ -32,6 +38,14 @@ EFFECT_REGISTRY: dict[str, EffectFunction] = {
     "add_edge_value_shift": add_edge_value_shift,
     "multi_object_value_shift": add_multi_object_value_shift,
     "add_multi_object_value_shift": add_multi_object_value_shift,
+    "width_expansion": expand_object_width,
+    "expand_object_width": expand_object_width,
+    "width_contraction": contract_object_width,
+    "contract_object_width": contract_object_width,
+    "rim_enhancement": add_rim_enhancement,
+    "add_rim_enhancement": add_rim_enhancement,
+    "hollow_core_change": add_hollow_core_change,
+    "add_hollow_core_change": add_hollow_core_change,
 }
 
 
