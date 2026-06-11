@@ -1060,3 +1060,24 @@ def test_unknown_effect_kind_from_config_raises() -> None:
 
     with pytest.raises(ValueError, match="Unknown effect kind"):
         render_scene_from_dict(payload)
+
+
+def test_example_known_effect_tube_yaml_renders() -> None:
+    scene = render_scene_from_path("examples/known_effect_tube.yml")
+
+    assert scene.metadata["scene_id"] == "known_effect_tube"
+    assert "scalar" in scene.scalar_maps
+    assert scene.object_masks["target"].sum() > 0
+
+    assert np.isclose(scene.scalar_maps["scalar"][16, 16, 16], 1.4)
+    assert np.isclose(scene.scalar_maps["scalar"][10, 16, 16], 1.0)
+
+    assert list(scene.truth.metadata["effects"]) == [
+        "001_axis_interval_value_shift",
+    ]
+    record = scene.truth.metadata["effects"]["001_axis_interval_value_shift"]
+    assert record["affected_objects"] == ["target"]
+    assert record["affected_maps"] == ["scalar"]
+    assert record["expected_direction"] == "increase"
+    assert record["clean_null"] is False
+    assert scene.metadata["effects"][0]["name"] == "axis_interval_value_shift"
