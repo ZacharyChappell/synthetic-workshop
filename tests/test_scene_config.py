@@ -907,3 +907,17 @@ def test_unknown_perturbation_kind_from_config_raises() -> None:
 
     with pytest.raises(ValueError, match="Unknown perturbation kind"):
         render_scene_from_dict(payload)
+
+
+def test_example_perturbed_tube_yaml_renders() -> None:
+    scene = render_scene_from_path("examples/perturbed_tube.yml")
+
+    assert scene.metadata["scene_id"] == "perturbed_tube"
+    assert "scalar" in scene.scalar_maps
+    assert scene.object_masks["target"].sum() > 0
+    assert list(scene.truth.perturbations) == [
+        "001_intensity_scaling",
+        "002_gaussian_noise",
+    ]
+    assert scene.metadata["perturbations"][0]["name"] == "intensity_scaling"
+    assert scene.metadata["perturbations"][1]["seed"] == 123
