@@ -7,6 +7,10 @@ from synthworkshop.effects.apply import (
     available_effects,
 )
 from synthworkshop.effects.base import EffectRecord
+from synthworkshop.effects.localised import (
+    add_axis_interval_value_shift,
+    add_branch_value_shift,
+)
 from synthworkshop.effects.morphology import (
     add_hollow_core_change,
     add_rim_enhancement,
@@ -24,6 +28,8 @@ from synthworkshop.effects.scalar import (
 __all__ = [
     "EFFECT_REGISTRY",
     "EffectRecord",
+    "add_axis_interval_value_shift",
+    "add_branch_value_shift",
     "add_centre_value_shift",
     "add_edge_value_shift",
     "add_hollow_core_change",
