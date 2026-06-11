@@ -1,5 +1,11 @@
 """Known-effect injection for rendered synthetic scenes."""
 
+from synthworkshop.effects.apply import (
+    EFFECT_REGISTRY,
+    apply_effect,
+    apply_effects,
+    available_effects,
+)
 from synthworkshop.effects.base import EffectRecord
 from synthworkshop.effects.scalar import (
     add_centre_value_shift,
@@ -10,10 +16,14 @@ from synthworkshop.effects.scalar import (
 )
 
 __all__ = [
+    "EFFECT_REGISTRY",
     "EffectRecord",
     "add_centre_value_shift",
     "add_edge_value_shift",
     "add_multi_object_value_shift",
     "add_object_value_shift",
+    "apply_effect",
+    "apply_effects",
+    "available_effects",
     "inject_no_effect",
 ]
