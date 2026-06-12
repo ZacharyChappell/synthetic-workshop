@@ -12,7 +12,12 @@ from pathlib import Path
 from synthworkshop.datasets import (
     CatalogueEntry,
     get_catalogue_entry,
-    list_catalogue_entries,
+)
+from synthworkshop.datasets import (
+    catalogue_rows as dataset_catalogue_rows,
+)
+from synthworkshop.datasets import (
+    catalogue_scene_ids as dataset_catalogue_scene_ids,
 )
 from synthworkshop.scenes.validation import SceneValidationReport, validate_scene_config
 from synthworkshop.workflows import SceneWorkflowResult, render_export_gallery
@@ -21,13 +26,13 @@ from synthworkshop.workflows import SceneWorkflowResult, render_export_gallery
 def catalogue_rows() -> list[dict[str, str]]:
     """Return catalogue entries as display-friendly rows."""
 
-    return [entry.to_row() for entry in list_catalogue_entries()]
+    return list(dataset_catalogue_rows())
 
 
 def catalogue_scene_ids() -> list[str]:
     """Return built-in catalogue scene IDs."""
 
-    return [entry.scene_id for entry in list_catalogue_entries()]
+    return list(dataset_catalogue_scene_ids())
 
 
 def default_output_root(scene_id: str) -> Path:
