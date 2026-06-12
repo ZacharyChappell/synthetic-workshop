@@ -374,6 +374,35 @@ CATALOGUE: tuple[CatalogueEntry, ...] = (
         ),
         tags=("environment", "near-crossing", "contamination", "two-tube"),
     ),
+    CatalogueEntry(
+        scene_id="physical_crossing_tubes",
+        title="Physical crossing target and neighbour tubes",
+        family="environment",
+        config_path=_example_path("physical_crossing_tubes.yml"),
+        purpose=(
+            "Tests physically overlapping tubes that remain separate analytic "
+            "objects rather than a shared graph topology."
+        ),
+        expected_appearance=(
+            "Two perpendicular tubes cross through the same local region, with "
+            "target and environmental roles kept distinct."
+        ),
+        validation_focus=(
+            "physical crossing",
+            "object overlap",
+            "environment role",
+            "partial-volume-like ambiguity",
+        ),
+        expected_failure_mode=(
+            "Methods may treat physical overlap as shared topology or mix target "
+            "and environmental signal at the crossing."
+        ),
+        recommended_use=(
+            "Use for crossing-contamination checks where objects physically "
+            "overlap but are not graph-connected."
+        ),
+        tags=("environment", "physical-crossing", "overlap", "two-tube"),
+    ),
 )
 
 
