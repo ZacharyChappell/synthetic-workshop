@@ -150,3 +150,17 @@ def test_cli_gui_parser_accepts_options() -> None:
     assert args.host == "127.0.0.1"
     assert args.port == 8502
     assert args.no_browser
+
+
+def test_cli_catalogue_show_includes_validation_metadata(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    exit_code = main(["catalogue", "--show", "known_effect_tube"])
+
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert "Expected failure mode:" in captured.out
+    assert "Recommended use:" in captured.out
+    assert "Tags:" in captured.out
+    assert "known-effect" in captured.out

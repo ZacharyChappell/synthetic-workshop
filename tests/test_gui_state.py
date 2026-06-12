@@ -84,3 +84,17 @@ def test_gui_render_preview_scene_config_text_writes_gallery_only(
     assert (preview_root / "gallery").exists()
     assert not (preview_root / "export").exists()
     assert gallery_png_paths(preview_root)
+
+
+def test_gui_catalogue_rows_delegate_to_dataset_catalogue() -> None:
+    from synthworkshop.datasets import catalogue_rows as dataset_catalogue_rows
+
+    assert catalogue_rows() == list(dataset_catalogue_rows())
+
+
+def test_gui_catalogue_scene_ids_delegate_to_dataset_catalogue() -> None:
+    from synthworkshop.datasets import (
+        catalogue_scene_ids as dataset_catalogue_scene_ids,
+    )
+
+    assert catalogue_scene_ids() == list(dataset_catalogue_scene_ids())

@@ -7,7 +7,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from synthworkshop import __version__
-from synthworkshop.datasets import get_catalogue_entry, list_catalogue_entries
+from synthworkshop.datasets import catalogue_rows, get_catalogue_entry
 from synthworkshop.scenes.validation import validate_scene_config
 from synthworkshop.workflows import render_export_gallery
 
@@ -203,11 +203,11 @@ def run_catalogue_command(args: argparse.Namespace) -> int:
     """Run the `synthworkshop catalogue` command."""
 
     if args.list:
-        entries = list_catalogue_entries()
+        rows = catalogue_rows()
         print("Built-in scene catalogue")
         print("======================")
-        for entry in entries:
-            print(f"{entry.scene_id}\t{entry.family}\t{entry.title}")
+        for row in rows:
+            print(f"{row['scene_id']}\t{row['family']}\t{row['title']}")
         return 0
 
     if args.show is not None:
@@ -220,6 +220,12 @@ def run_catalogue_command(args: argparse.Namespace) -> int:
         print(f"Purpose: {row['purpose']}")
         print(f"Expected appearance: {row['expected_appearance']}")
         print(f"Validation focus: {row['validation_focus']}")
+        print(f"Expected failure mode: {row['expected_failure_mode']}")
+        print(f"Recommended use: {row['recommended_use']}")
+        print(f"Tags: {row['tags']}")
+        print(f"Default output name: {row['default_output_name']}")
+        if row["seed"]:
+            print(f"Seed: {row['seed']}")
         if row["notes"]:
             print(f"Notes: {row['notes']}")
         return 0
