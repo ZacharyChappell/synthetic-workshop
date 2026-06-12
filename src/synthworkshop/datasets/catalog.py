@@ -395,3 +395,30 @@ def get_catalogue_entry(
         )
 
     return entry
+
+
+def catalogue_scene_ids(*, require_exists: bool = True) -> tuple[str, ...]:
+    """Return built-in catalogue scene IDs."""
+
+    return tuple(
+        entry.scene_id
+        for entry in list_catalogue_entries(require_exists=require_exists)
+    )
+
+
+def catalogue_rows(*, require_exists: bool = True) -> tuple[dict[str, str], ...]:
+    """Return catalogue entries as display-friendly rows."""
+
+    return tuple(
+        entry.to_row()
+        for entry in list_catalogue_entries(require_exists=require_exists)
+    )
+
+
+def render_catalogue_scene(scene_id: str):
+    """Render one built-in catalogue scene."""
+
+    from synthworkshop.scenes.config import render_scene_from_path
+
+    entry = get_catalogue_entry(scene_id)
+    return render_scene_from_path(entry.config_path)
