@@ -1081,3 +1081,18 @@ def test_example_known_effect_tube_yaml_renders() -> None:
     assert record["expected_direction"] == "increase"
     assert record["clean_null"] is False
     assert scene.metadata["effects"][0]["name"] == "axis_interval_value_shift"
+
+
+def test_example_near_crossing_tubes_yaml_renders() -> None:
+    scene = render_scene_from_path("examples/near_crossing_tubes.yml")
+
+    assert scene.metadata["scene_id"] == "near_crossing_tubes"
+    assert "target" in scene.object_masks
+    assert "oblique_neighbour" in scene.object_masks
+    assert scene.object_masks["target"].sum() > 0
+    assert scene.object_masks["oblique_neighbour"].sum() > 0
+    assert not (
+        scene.object_masks["target"] & scene.object_masks["oblique_neighbour"]
+    ).any()
+    assert scene.object_metadata["target"].role.value == "target"
+    assert scene.object_metadata["oblique_neighbour"].role.value == "environment"
