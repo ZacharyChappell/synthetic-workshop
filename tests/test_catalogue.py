@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from synthworkshop.datasets import (
@@ -154,3 +156,16 @@ def test_catalogue_includes_simple_graph_tube_scene() -> None:
     assert entry.config_path.exists()
     assert entry.expected_failure_mode
     assert entry.recommended_use
+
+
+def test_all_yaml_examples_are_registered_in_catalogue() -> None:
+    example_paths = sorted((Path("examples")).glob("*.yml"))
+    catalogue_paths = {
+        entry.config_path.resolve() for entry in list_catalogue_entries()
+    }
+
+    missing = [
+        str(path) for path in example_paths if path.resolve() not in catalogue_paths
+    ]
+
+    assert missing == []
