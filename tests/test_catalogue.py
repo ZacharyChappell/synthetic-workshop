@@ -124,3 +124,13 @@ def test_render_catalogue_scene_rejects_unknown_scene() -> None:
 
     with pytest.raises(KeyError, match="Unknown catalogue scene_id"):
         render_catalogue_scene("not_a_scene")
+
+
+def test_catalogue_includes_near_crossing_tubes_scene() -> None:
+    entry = get_catalogue_entry("near_crossing_tubes")
+
+    assert entry.family == "environment"
+    assert "near-crossing" in entry.tags
+    assert entry.config_path.exists()
+    assert entry.expected_failure_mode
+    assert entry.recommended_use

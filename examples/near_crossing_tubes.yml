@@ -1,0 +1,54 @@
+schema_version: "0.1"
+
+scene:
+  id: near_crossing_tubes
+  description: "Two nearby non-touching tubes with different roles and labels."
+
+grid:
+  shape: [40, 40, 40]
+  spacing: [1.0, 1.0, 1.0]
+
+composition:
+  label_mode: priority
+  scalar_blend: overwrite
+  overlap_policy: allow
+
+objects:
+  - id: target
+    kind: tube
+    role: target
+    label: 1
+    priority: 20
+    map_name: scalar
+    curve:
+      kind: line
+      start_mm: [8.0, 20.0, 20.0]
+      end_mm: [32.0, 20.0, 20.0]
+      step_mm: 1.0
+    cross_section:
+      kind: circle
+      radius_mm: 2.5
+    profile:
+      kind: linear_radial
+      centre_value: 1.0
+      edge_value: 0.3
+      background_value: 0.0
+
+  - id: oblique_neighbour
+    kind: tube
+    role: environment
+    label: 2
+    priority: 10
+    map_name: scalar
+    curve:
+      kind: line
+      start_mm: [20.0, 9.0, 25.5]
+      end_mm: [20.0, 31.0, 25.5]
+      step_mm: 1.0
+    cross_section:
+      kind: circle
+      radius_mm: 2.0
+    profile:
+      kind: constant
+      value: 0.65
+      background_value: 0.0

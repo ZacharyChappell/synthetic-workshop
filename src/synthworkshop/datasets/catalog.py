@@ -345,6 +345,35 @@ CATALOGUE: tuple[CatalogueEntry, ...] = (
         recommended_use="Use as the minimal known-effect workflow example.",
         tags=("known-effect", "localised", "scalar-shift", "metadata"),
     ),
+    CatalogueEntry(
+        scene_id="near_crossing_tubes",
+        title="Near-crossing target and neighbour tubes",
+        family="environment",
+        config_path=_example_path("near_crossing_tubes.yml"),
+        purpose=(
+            "Tests local proximity between a target tube and a nearby "
+            "non-touching environmental tube."
+        ),
+        expected_appearance=(
+            "Two tubes pass close to one another without forming a graph junction "
+            "or shared topology."
+        ),
+        validation_focus=(
+            "near crossing",
+            "environment role",
+            "local contamination",
+            "target separation",
+        ),
+        expected_failure_mode=(
+            "Sampling or support-estimation methods may leak signal from the "
+            "nearby environmental tube into the target profile."
+        ),
+        recommended_use=(
+            "Use for proximity-contamination checks where objects are close but "
+            "topologically separate."
+        ),
+        tags=("environment", "near-crossing", "contamination", "two-tube"),
+    ),
 )
 
 
