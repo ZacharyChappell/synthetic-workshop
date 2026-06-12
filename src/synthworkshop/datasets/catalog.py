@@ -403,6 +403,35 @@ CATALOGUE: tuple[CatalogueEntry, ...] = (
         ),
         tags=("environment", "physical-crossing", "overlap", "two-tube"),
     ),
+    CatalogueEntry(
+        scene_id="simple_graph_tube",
+        title="Simple graph tube",
+        family="topology",
+        config_path=_example_path("simple_graph_tube.yml"),
+        purpose=(
+            "Tests a small graph-defined tube with explicit edge objects, "
+            "junction metadata, and graph-level truth tables."
+        ),
+        expected_appearance=(
+            "A T-shaped target object with one trunk and two branches meeting at "
+            "a central junction."
+        ),
+        validation_focus=(
+            "graph topology",
+            "junction handling",
+            "edge masks",
+            "graph truth tables",
+        ),
+        expected_failure_mode=(
+            "Methods may lose branch-specific support or conflate junction "
+            "overlap with a single ordinary tube."
+        ),
+        recommended_use=(
+            "Use as the minimal topology scene for graph, branch, and junction "
+            "handling checks."
+        ),
+        tags=("topology", "graph-tube", "junction", "branch"),
+    ),
 )
 
 

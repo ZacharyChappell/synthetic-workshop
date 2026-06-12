@@ -1,0 +1,52 @@
+schema_version: "0.1"
+
+scene:
+  id: simple_graph_tube
+  description: "Simple T-shaped graph tube with explicit edge-level truth."
+
+grid:
+  shape: [32, 32, 32]
+  spacing: [1.0, 1.0, 1.0]
+
+composition:
+  label_mode: priority
+  scalar_blend: overwrite
+  overlap_policy: allow
+
+objects:
+  - id: target_graph
+    kind: graph_tube
+    role: target
+    label: 3
+    priority: 10
+    map_name: scalar
+    step_mm: 1.0
+    graph:
+      id: t_graph
+      nodes:
+        - id: root
+          coordinate_mm: [6.0, 16.0, 16.0]
+        - id: junction
+          coordinate_mm: [16.0, 16.0, 16.0]
+        - id: left
+          coordinate_mm: [26.0, 11.0, 16.0]
+        - id: right
+          coordinate_mm: [26.0, 21.0, 16.0]
+      edges:
+        - id: trunk
+          start: root
+          end: junction
+        - id: left_branch
+          start: junction
+          end: left
+        - id: right_branch
+          start: junction
+          end: right
+    cross_section:
+      kind: circle
+      radius_mm: 1.8
+    profile:
+      kind: linear_radial
+      centre_value: 1.0
+      edge_value: 0.25
+      background_value: 0.0
