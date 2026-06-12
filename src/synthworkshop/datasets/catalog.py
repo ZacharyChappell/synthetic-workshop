@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from collections.abc import Mapping
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 SceneFamily = Literal[
     "control",
@@ -13,6 +14,9 @@ SceneFamily = Literal[
     "implicit_object",
     "topology",
     "scalar_profile",
+    "perturbation",
+    "known_effect",
+    "null_case",
     "stress",
 ]
 
@@ -28,7 +32,49 @@ class CatalogueEntry:
     purpose: str
     expected_appearance: str
     validation_focus: tuple[str, ...] = ()
+    expected_failure_mode: str = ""
+    recommended_use: str = ""
+    tags: tuple[str, ...] = ()
+    default_output_name: str | None = None
+    seed: int | None = None
+    sweep_parameters: Mapping[str, Any] = field(default_factory=dict)
     notes: str = ""
+
+    def __post_init__(self) -> None:
+        scene_id = str(self.scene_id)
+        title = str(self.title)
+        purpose = str(self.purpose)
+        expected_appearance = str(self.expected_appearance)
+        default_output_name = self.default_output_name or scene_id
+
+        if not scene_id:
+            raise ValueError("scene_id must be a non-empty string.")
+        if not title:
+            raise ValueError("title must be a non-empty string.")
+        if not purpose:
+            raise ValueError("purpose must be a non-empty string.")
+        if not expected_appearance:
+            raise ValueError("expected_appearance must be a non-empty string.")
+        if not default_output_name:
+            raise ValueError("default_output_name must be a non-empty string.")
+
+        object.__setattr__(self, "scene_id", scene_id)
+        object.__setattr__(self, "title", title)
+        object.__setattr__(self, "config_path", Path(self.config_path))
+        object.__setattr__(self, "purpose", purpose)
+        object.__setattr__(self, "expected_appearance", expected_appearance)
+        object.__setattr__(
+            self,
+            "validation_focus",
+            tuple(str(item) for item in self.validation_focus),
+        )
+        object.__setattr__(
+            self,
+            "tags",
+            tuple(str(item) for item in self.tags),
+        )
+        object.__setattr__(self, "default_output_name", str(default_output_name))
+        object.__setattr__(self, "sweep_parameters", dict(self.sweep_parameters))
 
     def to_row(self) -> dict[str, str]:
         """Return a compact row suitable for CLI display or TSV export."""
@@ -41,6 +87,11 @@ class CatalogueEntry:
             "purpose": self.purpose,
             "expected_appearance": self.expected_appearance,
             "validation_focus": "; ".join(self.validation_focus),
+            "expected_failure_mode": self.expected_failure_mode,
+            "recommended_use": self.recommended_use,
+            "tags": "; ".join(self.tags),
+            "default_output_name": str(self.default_output_name),
+            "seed": "" if self.seed is None else str(self.seed),
             "notes": self.notes,
         }
 
@@ -83,6 +134,12 @@ CATALOGUE: tuple[CatalogueEntry, ...] = (
             "scalar profile",
             "export smoke test",
         ),
+        expected_failure_mode=(
+            "Unexpected mask, label, scalar-profile, or export failure in a simple "
+            "single-object scene."
+        ),
+        recommended_use="Use as smoke test for rendering and export workflows.",
+        tags=("control", "tube", "straight", "scalar-profile"),
     ),
     CatalogueEntry(
         scene_id="curved_elliptic_tube",
@@ -103,6 +160,13 @@ CATALOGUE: tuple[CatalogueEntry, ...] = (
             "local frame behaviour",
             "projection visualisation",
         ),
+        expected_failure_mode=(
+            "Frame, projection, or support-estimation errors caused by curvature "
+            "and non-circular cross-sections."
+        ),
+        recommended_use="Use when checking curve-aware rendering and "
+        "centreline/frame outputs.",
+        tags=("morphology", "curved", "ellipse", "frame"),
     ),
     CatalogueEntry(
         scene_id="variable_radius_tube",
@@ -122,6 +186,12 @@ CATALOGUE: tuple[CatalogueEntry, ...] = (
             "profile support",
             "width recovery",
         ),
+        expected_failure_mode=(
+            "Biased profile or width estimates when local support changes along "
+            "the object."
+        ),
+        recommended_use="Use for width-sensitive sampling and profile-support checks.",
+        tags=("morphology", "variable-width", "tube"),
     ),
     CatalogueEntry(
         scene_id="ribbon_tube",
@@ -141,6 +211,12 @@ CATALOGUE: tuple[CatalogueEntry, ...] = (
             "edge ambiguity",
             "projection QC",
         ),
+        expected_failure_mode=(
+            "Circular or isotropic sampling assumptions blur or misrepresent "
+            "flattened support."
+        ),
+        recommended_use="Use when testing methods on anisotropic or sheet-like support",
+        tags=("morphology", "ribbon", "flattened", "edge"),
     ),
     CatalogueEntry(
         scene_id="tube_with_implicit_objects",
@@ -161,6 +237,12 @@ CATALOGUE: tuple[CatalogueEntry, ...] = (
             "composition",
             "overlap reporting",
         ),
+        expected_failure_mode=(
+            "Incorrect object labelling or overlap handling when target and "
+            "implicit objects coexist."
+        ),
+        recommended_use="Use for composition, overlap-reporting, and label-map checks.",
+        tags=("implicit-object", "composition", "overlap"),
     ),
     CatalogueEntry(
         scene_id="tube_with_slab_environment",
@@ -181,6 +263,12 @@ CATALOGUE: tuple[CatalogueEntry, ...] = (
             "partial-volume-like contamination",
             "object overlap",
         ),
+        expected_failure_mode=(
+            "Target/environment confusion or analysis-mask leakage near adjacent "
+            "compartments."
+        ),
+        recommended_use="Use for environment, analysis-mask, and contamination checks.",
+        tags=("environment", "slab", "analysis-mask", "contamination"),
     ),
     CatalogueEntry(
         scene_id="cone_frustum_scene",
@@ -200,6 +288,62 @@ CATALOGUE: tuple[CatalogueEntry, ...] = (
             "implicit support",
             "label composition",
         ),
+        expected_failure_mode=(
+            "Boundary or support errors for tapered non-tube analytic objects."
+        ),
+        recommended_use="Use when checking implicit-object rendering beyond "
+        "spheres and slabs.",
+        tags=("implicit-object", "cone", "frustum", "tapered"),
+    ),
+    CatalogueEntry(
+        scene_id="perturbed_tube",
+        title="Perturbed straight tube",
+        family="perturbation",
+        config_path=_example_path("perturbed_tube.yml"),
+        purpose=(
+            "Tests ordered observation-level perturbations applied to a simple "
+            "straight tube scene."
+        ),
+        expected_appearance=(
+            "A straight tube with intensity scaling and low-amplitude scalar noise."
+        ),
+        validation_focus=(
+            "perturbation metadata",
+            "ordered perturbations",
+            "observation degradation",
+            "seeded noise",
+        ),
+        expected_failure_mode=(
+            "Missing perturbation provenance or incorrect ordering of observation "
+            "degradation steps."
+        ),
+        recommended_use="Use as the minimal perturbation workflow example.",
+        tags=("perturbation", "noise", "intensity-scaling", "metadata"),
+        seed=123,
+    ),
+    CatalogueEntry(
+        scene_id="known_effect_tube",
+        title="Known-effect straight tube",
+        family="known_effect",
+        config_path=_example_path("known_effect_tube.yml"),
+        purpose=(
+            "Tests a localised known scalar effect inside a simple straight tube."
+        ),
+        expected_appearance=(
+            "A straight tube with a higher-valued interval along one section of "
+            "the target object."
+        ),
+        validation_focus=(
+            "effect metadata",
+            "localised scalar effect",
+            "known support",
+            "expected direction",
+        ),
+        expected_failure_mode=(
+            "Failure to recover or record a known localised scalar change."
+        ),
+        recommended_use="Use as the minimal known-effect workflow example.",
+        tags=("known-effect", "localised", "scalar-shift", "metadata"),
     ),
 )
 
