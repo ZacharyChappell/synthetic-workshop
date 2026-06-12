@@ -45,6 +45,7 @@ from synthworkshop.profiles import (
 )
 from synthworkshop.scenes.model import CompositionRules, MaskRules, RenderedScene
 from synthworkshop.scenes.render import render_objects
+from synthworkshop.topology import GraphTubeObject, graph_spec_from_dict
 
 
 @dataclass(frozen=True)
@@ -58,6 +59,7 @@ class SceneObjectSpec:
     priority: int = 0
     map_name: str = "scalar"
     curve: Mapping[str, Any] = field(default_factory=dict)
+    graph: Mapping[str, Any] = field(default_factory=dict)
     cross_section: Mapping[str, Any] = field(default_factory=dict)
     profile: Mapping[str, Any] = field(default_factory=dict)
     parameters: Mapping[str, Any] = field(default_factory=dict)
@@ -91,6 +93,7 @@ class SceneObjectSpec:
         object.__setattr__(self, "label", label)
         object.__setattr__(self, "priority", priority)
         object.__setattr__(self, "curve", dict(self.curve))
+        object.__setattr__(self, "graph", dict(self.graph))
         object.__setattr__(self, "cross_section", dict(self.cross_section))
         object.__setattr__(self, "profile", dict(self.profile))
         object.__setattr__(self, "parameters", dict(self.parameters))
@@ -735,6 +738,14 @@ def _object_parameters_from_config(config: Mapping[str, Any]) -> dict[str, Any]:
             ),
         }
 
+    if kind in {"graph_tube", "graph_tube_object"}:
+        parameters: dict[str, Any] = {}
+        if "step_mm" in config:
+            parameters["step_mm"] = config["step_mm"]
+        if "n_samples_per_edge" in config:
+            parameters["n_samples_per_edge"] = config["n_samples_per_edge"]
+        return parameters
+
     return {}
 
 
@@ -743,9 +754,14 @@ def _object_spec_from_config(config: Mapping[str, Any]) -> SceneObjectSpec:
 
     kind = str(config["kind"])
     normalised_kind = _kind(kind)
+    graph: Mapping[str, Any] = {}
 
     if normalised_kind == "tube":
         curve = _required_mapping(config, "curve")
+        cross_section = _required_mapping(config, "cross_section")
+    elif normalised_kind in {"graph_tube", "graph_tube_object"}:
+        curve = {}
+        graph = _required_mapping(config, "graph")
         cross_section = _required_mapping(config, "cross_section")
     elif normalised_kind in {
         "sphere",
@@ -775,6 +791,7 @@ def _object_spec_from_config(config: Mapping[str, Any]) -> SceneObjectSpec:
         priority=int(config.get("priority", 0)),
         map_name=str(config.get("map_name", "scalar")),
         curve=curve,
+        graph=graph,
         cross_section=cross_section,
         profile=_required_mapping(config, "profile"),
         parameters=_object_parameters_from_config(config),
@@ -919,12 +936,42 @@ def _frustum_from_spec(spec: SceneObjectSpec) -> FrustumObject:
     )
 
 
+def _graph_tube_from_spec(spec: SceneObjectSpec) -> GraphTubeObject:
+    """Build a GraphTubeObject from a SceneObjectSpec."""
+
+    graph = graph_spec_from_dict(spec.graph)
+    cross_section = _cross_section_from_config(spec.cross_section)
+    profile = _profile_from_config(spec.profile)
+
+    return GraphTubeObject(
+        object_id=spec.object_id,
+        graph=graph,
+        cross_section=cross_section,
+        profile=profile,
+        map_name=spec.map_name,
+        role=spec.role,
+        label=spec.label,
+        priority=spec.priority,
+        step_mm=float(spec.parameters.get("step_mm", 1.0)),
+        n_samples_per_edge=(
+            None
+            if "n_samples_per_edge" not in spec.parameters
+            else int(spec.parameters["n_samples_per_edge"])
+        ),
+        name=spec.name,
+        description=spec.description,
+        metadata=dict(spec.metadata),
+    )
+
+
 def _object_from_spec(spec: SceneObjectSpec):
     """Build a renderable object from a SceneObjectSpec."""
 
     kind = _kind(spec.kind)
     if kind == "tube":
         return _tube_from_spec(spec)
+    if kind in {"graph_tube", "graph_tube_object"}:
+        return _graph_tube_from_spec(spec)
     if kind in {"sphere", "sphere_object"}:
         return _sphere_from_spec(spec)
     if kind in {"ellipsoid", "ellipsoid_object"}:

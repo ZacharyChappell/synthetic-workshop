@@ -144,3 +144,13 @@ def test_catalogue_includes_physical_crossing_tubes_scene() -> None:
     assert entry.config_path.exists()
     assert entry.expected_failure_mode
     assert entry.recommended_use
+
+
+def test_catalogue_includes_simple_graph_tube_scene() -> None:
+    entry = get_catalogue_entry("simple_graph_tube")
+
+    assert entry.family == "topology"
+    assert "graph-tube" in entry.tags
+    assert entry.config_path.exists()
+    assert entry.expected_failure_mode
+    assert entry.recommended_use

@@ -1111,3 +1111,42 @@ def test_example_physical_crossing_tubes_yaml_renders() -> None:
     ).any()
     assert scene.object_metadata["target"].role.value == "target"
     assert scene.object_metadata["crossing_neighbour"].role.value == "environment"
+
+
+def test_example_simple_graph_tube_yaml_renders() -> None:
+    scene = render_scene_from_path("examples/simple_graph_tube.yml")
+
+    expected_edge_ids = {
+        "target_graph__edge__trunk",
+        "target_graph__edge__left_branch",
+        "target_graph__edge__right_branch",
+    }
+
+    assert scene.metadata["scene_id"] == "simple_graph_tube"
+    assert expected_edge_ids.issubset(scene.object_masks)
+    assert "target_graph" in scene.centrelines
+    assert "target_graph" in scene.frames
+    assert "graph_nodes" in scene.truth.tables
+    assert "graph_edges" in scene.truth.tables
+    assert "graph_centrelines" in scene.truth.tables
+    assert scene.truth.geometric["target_graph"]["kind"] == "graph_tube"
+    assert set(scene.truth.tables["graph_edges"]["edge_id"]) == {
+        "trunk",
+        "left_branch",
+        "right_branch",
+    }
+
+
+def test_scene_config_rejects_graph_tube_without_graph() -> None:
+    payload = _basic_payload()
+    payload["objects"][0] = {
+        "id": "target_graph",
+        "kind": "graph_tube",
+        "role": "target",
+        "label": 1,
+        "cross_section": {"kind": "circle", "radius_mm": 1.0},
+        "profile": {"kind": "constant", "value": 1.0},
+    }
+
+    with pytest.raises(ValueError, match="graph"):
+        render_scene_from_dict(payload)
