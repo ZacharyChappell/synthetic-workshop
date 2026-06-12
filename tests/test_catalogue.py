@@ -76,3 +76,51 @@ def test_catalogue_includes_perturbation_and_known_effect_examples() -> None:
 
     assert "perturbed_tube" in scene_ids
     assert "known_effect_tube" in scene_ids
+
+
+def test_catalogue_scene_ids_match_entries() -> None:
+    from synthworkshop.datasets import catalogue_scene_ids
+
+    entries = list_catalogue_entries()
+
+    assert catalogue_scene_ids() == tuple(entry.scene_id for entry in entries)
+
+
+def test_catalogue_rows_match_entries() -> None:
+    from synthworkshop.datasets import catalogue_rows
+
+    rows = catalogue_rows()
+
+    assert rows
+    assert {row["scene_id"] for row in rows} == {
+        entry.scene_id for entry in list_catalogue_entries()
+    }
+    assert all(row["purpose"] for row in rows)
+    assert all(row["recommended_use"] for row in rows)
+
+
+def test_render_catalogue_scene_renders_basic_tube() -> None:
+    from synthworkshop.datasets import render_catalogue_scene
+
+    scene = render_catalogue_scene("basic_tube")
+
+    assert scene.metadata["scene_id"] == "basic_tube"
+    assert scene.object_masks["target"].sum() > 0
+
+
+def test_all_catalogue_entries_render() -> None:
+    from synthworkshop.datasets import render_catalogue_scene
+
+    for entry in list_catalogue_entries():
+        scene = render_catalogue_scene(entry.scene_id)
+
+        assert scene.metadata["scene_id"] == entry.scene_id
+        assert scene.scalar_maps
+        assert scene.object_masks
+
+
+def test_render_catalogue_scene_rejects_unknown_scene() -> None:
+    from synthworkshop.datasets import render_catalogue_scene
+
+    with pytest.raises(KeyError, match="Unknown catalogue scene_id"):
+        render_catalogue_scene("not_a_scene")
