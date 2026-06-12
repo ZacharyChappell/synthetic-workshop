@@ -1096,3 +1096,18 @@ def test_example_near_crossing_tubes_yaml_renders() -> None:
     ).any()
     assert scene.object_metadata["target"].role.value == "target"
     assert scene.object_metadata["oblique_neighbour"].role.value == "environment"
+
+
+def test_example_physical_crossing_tubes_yaml_renders() -> None:
+    scene = render_scene_from_path("examples/physical_crossing_tubes.yml")
+
+    assert scene.metadata["scene_id"] == "physical_crossing_tubes"
+    assert "target" in scene.object_masks
+    assert "crossing_neighbour" in scene.object_masks
+    assert scene.object_masks["target"].sum() > 0
+    assert scene.object_masks["crossing_neighbour"].sum() > 0
+    assert (
+        scene.object_masks["target"] & scene.object_masks["crossing_neighbour"]
+    ).any()
+    assert scene.object_metadata["target"].role.value == "target"
+    assert scene.object_metadata["crossing_neighbour"].role.value == "environment"

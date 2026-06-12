@@ -134,3 +134,13 @@ def test_catalogue_includes_near_crossing_tubes_scene() -> None:
     assert entry.config_path.exists()
     assert entry.expected_failure_mode
     assert entry.recommended_use
+
+
+def test_catalogue_includes_physical_crossing_tubes_scene() -> None:
+    entry = get_catalogue_entry("physical_crossing_tubes")
+
+    assert entry.family == "environment"
+    assert "physical-crossing" in entry.tags
+    assert entry.config_path.exists()
+    assert entry.expected_failure_mode
+    assert entry.recommended_use
