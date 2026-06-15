@@ -224,3 +224,92 @@ def test_cli_inspect_export_parser_accepts_strict() -> None:
 
     assert args.export_root == "outputs/basic_tube/export"
     assert args.strict
+
+
+def test_cli_render_inspects_export_by_default(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    exit_code = main(
+        [
+            "render",
+            "--config",
+            "examples/basic_tube.yml",
+            "--output-root",
+            str(tmp_path),
+            "--overwrite",
+            "--no-gallery",
+        ]
+    )
+
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert "Wrote export:" in captured.out
+    assert "Inspected export:" in captured.out
+    assert "Passed: true" in captured.out
+
+
+def test_cli_render_can_skip_export_inspection(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    exit_code = main(
+        [
+            "render",
+            "--config",
+            "examples/basic_tube.yml",
+            "--output-root",
+            str(tmp_path),
+            "--overwrite",
+            "--no-gallery",
+            "--no-inspect-export",
+        ]
+    )
+
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert "Wrote export:" in captured.out
+    assert "Inspected export:" not in captured.out
+
+
+def test_cli_catalogue_render_inspects_export_by_default(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    exit_code = main(
+        [
+            "catalogue",
+            "--render",
+            "basic_tube",
+            "--output-root",
+            str(tmp_path),
+            "--overwrite",
+        ]
+    )
+
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert "Rendered catalogue scene: basic_tube" in captured.out
+    assert "Inspected export:" in captured.out
+    assert "Passed: true" in captured.out
+
+
+def test_cli_render_parser_accepts_export_inspection_options() -> None:
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "render",
+            "--config",
+            "examples/basic_tube.yml",
+            "--output-root",
+            "outputs/basic_tube",
+            "--no-inspect-export",
+            "--strict-export-inspection",
+        ]
+    )
+
+    assert args.no_inspect_export
+    assert args.strict_export_inspection

@@ -104,6 +104,16 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Allow existing output files to be replaced.",
     )
+    catalogue_parser.add_argument(
+        "--no-inspect-export",
+        action="store_true",
+        help="Do not inspect exported files after catalogue rendering.",
+    )
+    catalogue_parser.add_argument(
+        "--strict-export-inspection",
+        action="store_true",
+        help="Return a non-zero exit code for export-inspection warnings.",
+    )
     catalogue_parser.set_defaults(func=run_catalogue_command)
 
     validate_parser = subparsers.add_parser(
@@ -180,6 +190,16 @@ def build_parser() -> argparse.ArgumentParser:
         "--overwrite",
         action="store_true",
         help="Allow existing output files to be replaced.",
+    )
+    render_parser.add_argument(
+        "--no-inspect-export",
+        action="store_true",
+        help="Do not inspect exported files after rendering.",
+    )
+    render_parser.add_argument(
+        "--strict-export-inspection",
+        action="store_true",
+        help="Return a non-zero exit code for export-inspection warnings.",
     )
     render_parser.set_defaults(func=run_render_command)
 
@@ -268,6 +288,13 @@ def run_catalogue_command(args: argparse.Namespace) -> int:
         print(f"Rendered catalogue scene: {entry.scene_id}")
         print(f"Selected map: {result.map_name}")
         print(f"Wrote export: {output_root / 'export'}")
+        if not args.no_inspect_export:
+            exit_code = _print_export_inspection(
+                output_root / "export",
+                strict=args.strict_export_inspection,
+            )
+            if exit_code != 0:
+                return exit_code
         print(f"Wrote gallery: {output_root / 'gallery'}")
         return 0
 
@@ -322,6 +349,13 @@ def run_render_command(args: argparse.Namespace) -> int:
 
     if result.exported:
         print(f"Wrote export: {output_root / 'export'}")
+        if not args.no_inspect_export:
+            exit_code = _print_export_inspection(
+                output_root / "export",
+                strict=args.strict_export_inspection,
+            )
+            if exit_code != 0:
+                return exit_code
     else:
         print("Export skipped.")
 
@@ -336,7 +370,13 @@ def run_render_command(args: argparse.Namespace) -> int:
 def run_inspect_export_command(args: argparse.Namespace) -> int:
     """Run the `synthworkshop inspect-export` command."""
 
-    report = inspect_export_contract(args.export_root)
+    return _print_export_inspection(args.export_root, strict=args.strict)
+
+
+def _print_export_inspection(export_root: str | Path, *, strict: bool) -> int:
+    """Inspect an export directory and print a compact report."""
+
+    report = inspect_export_contract(export_root)
     counts = report.summary_counts()
 
     print(f"Inspected export: {report.export_root}")
@@ -354,7 +394,7 @@ def run_inspect_export_command(args: argparse.Namespace) -> int:
 
     if not report.passed:
         return 1
-    if args.strict and report.warnings():
+    if strict and report.warnings():
         return 1
     return 0
 
