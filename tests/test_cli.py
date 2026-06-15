@@ -313,3 +313,83 @@ def test_cli_render_parser_accepts_export_inspection_options() -> None:
 
     assert args.no_inspect_export
     assert args.strict_export_inspection
+
+
+def test_cli_catalogue_render_can_skip_gallery(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    exit_code = main(
+        [
+            "catalogue",
+            "--render",
+            "basic_tube",
+            "--output-root",
+            str(tmp_path),
+            "--overwrite",
+            "--no-gallery",
+        ]
+    )
+
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert "Rendered catalogue scene: basic_tube" in captured.out
+    assert "Gallery skipped." in captured.out
+    assert (tmp_path / "export" / "metadata" / "export_manifest.json").exists()
+    assert not (tmp_path / "gallery").exists()
+
+
+def test_cli_catalogue_render_all_requires_output_root() -> None:
+    with pytest.raises(ValueError, match="--output-root is required"):
+        main(["catalogue", "--render-all"])
+
+
+def test_cli_catalogue_render_all_writes_exports(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    from synthworkshop.datasets import list_catalogue_entries
+
+    exit_code = main(
+        [
+            "catalogue",
+            "--render-all",
+            "--output-root",
+            str(tmp_path),
+            "--overwrite",
+            "--no-gallery",
+        ]
+    )
+
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert "Rendering catalogue scenes:" in captured.out
+    assert "Inspected export:" in captured.out
+
+    for entry in list_catalogue_entries():
+        export_root = tmp_path / entry.default_output_name / "export"
+        assert (export_root / "metadata" / "export_manifest.json").exists()
+        assert (export_root / "tables" / "export_manifest.tsv").exists()
+
+
+def test_cli_catalogue_render_all_parser_accepts_options() -> None:
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "catalogue",
+            "--render-all",
+            "--output-root",
+            "outputs/catalogue",
+            "--no-gallery",
+            "--no-inspect-export",
+            "--strict-export-inspection",
+        ]
+    )
+
+    assert args.render_all
+    assert args.output_root == "outputs/catalogue"
+    assert args.no_gallery
+    assert args.no_inspect_export
+    assert args.strict_export_inspection
