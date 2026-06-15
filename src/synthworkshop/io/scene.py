@@ -68,11 +68,28 @@ class SceneExportManifest:
     def to_dict(self) -> dict[str, object]:
         """Return a serialisable manifest dictionary."""
 
+        relative_paths = {
+            "arrays": {
+                role: _relative_path(path, self.output_root)
+                for role, path in self.arrays.items()
+            },
+            "tables": {
+                role: _relative_path(path, self.output_root)
+                for role, path in self.tables.items()
+            },
+            "metadata": {
+                role: _relative_path(path, self.output_root)
+                for role, path in self.metadata.items()
+            },
+        }
+
         return {
             "output_root": self.output_root,
             "arrays": dict(self.arrays),
             "tables": dict(self.tables),
             "metadata": dict(self.metadata),
+            "relative_paths": relative_paths,
+            "files": self.to_dataframe().to_dict(orient="records"),
         }
 
 
