@@ -8,6 +8,7 @@ from pathlib import Path
 
 from synthworkshop import __version__
 from synthworkshop.datasets import catalogue_rows, get_catalogue_entry
+from synthworkshop.io import inspect_export_contract
 from synthworkshop.scenes.validation import validate_scene_config
 from synthworkshop.workflows import render_export_gallery
 
@@ -182,6 +183,22 @@ def build_parser() -> argparse.ArgumentParser:
     )
     render_parser.set_defaults(func=run_render_command)
 
+    inspect_parser = subparsers.add_parser(
+        "inspect-export",
+        help="Inspect an exported scene directory.",
+    )
+    inspect_parser.add_argument(
+        "--export-root",
+        required=True,
+        help="Path to an exported scene directory.",
+    )
+    inspect_parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Return a non-zero exit code for warnings as well as errors.",
+    )
+    inspect_parser.set_defaults(func=run_inspect_export_command)
+
     return parser
 
 
@@ -313,6 +330,32 @@ def run_render_command(args: argparse.Namespace) -> int:
     else:
         print("Gallery skipped.")
 
+    return 0
+
+
+def run_inspect_export_command(args: argparse.Namespace) -> int:
+    """Run the `synthworkshop inspect-export` command."""
+
+    report = inspect_export_contract(args.export_root)
+    counts = report.summary_counts()
+
+    print(f"Inspected export: {report.export_root}")
+    print(f"Passed: {str(report.passed).lower()}")
+    print(f"Manifest entries: {len(report.manifest_rows)}")
+    print(
+        "Issues: "
+        f"{counts['error']} error(s), "
+        f"{counts['warning']} warning(s), "
+        f"{counts['info']} info message(s)"
+    )
+
+    for issue in report.issues:
+        print(f"[{issue.severity}] {issue.location}: {issue.message}")
+
+    if not report.passed:
+        return 1
+    if args.strict and report.warnings():
+        return 1
     return 0
 
 

@@ -164,3 +164,63 @@ def test_cli_catalogue_show_includes_validation_metadata(
     assert "Recommended use:" in captured.out
     assert "Tags:" in captured.out
     assert "known-effect" in captured.out
+
+
+def test_cli_inspect_export_passes_for_valid_export(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    from synthworkshop.datasets import render_catalogue_scene
+    from synthworkshop.io import export_scene
+
+    scene = render_catalogue_scene("basic_tube")
+    manifest = export_scene(scene, tmp_path / "basic_tube")
+
+    exit_code = main(
+        [
+            "inspect-export",
+            "--export-root",
+            str(manifest.output_root),
+        ]
+    )
+
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert "Inspected export:" in captured.out
+    assert "Passed: true" in captured.out
+    assert "Manifest entries:" in captured.out
+
+
+def test_cli_inspect_export_fails_for_missing_export(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    exit_code = main(
+        [
+            "inspect-export",
+            "--export-root",
+            str(tmp_path / "missing_export"),
+        ]
+    )
+
+    captured = capsys.readouterr()
+
+    assert exit_code == 1
+    assert "Passed: false" in captured.out
+    assert "does not exist" in captured.out
+
+
+def test_cli_inspect_export_parser_accepts_strict() -> None:
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "inspect-export",
+            "--export-root",
+            "outputs/basic_tube/export",
+            "--strict",
+        ]
+    )
+
+    assert args.export_root == "outputs/basic_tube/export"
+    assert args.strict
