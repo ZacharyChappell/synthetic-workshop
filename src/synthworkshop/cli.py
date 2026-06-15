@@ -7,7 +7,11 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from synthworkshop import __version__
-from synthworkshop.datasets import catalogue_rows, get_catalogue_entry
+from synthworkshop.datasets import (
+    catalogue_rows,
+    get_catalogue_entry,
+    list_catalogue_entries,
+)
 from synthworkshop.io import inspect_export_contract
 from synthworkshop.scenes.validation import validate_scene_config
 from synthworkshop.workflows import render_export_gallery
@@ -72,6 +76,11 @@ def build_parser() -> argparse.ArgumentParser:
         metavar="SCENE_ID",
         help="Render one catalogue scene.",
     )
+    catalogue_action.add_argument(
+        "--render-all",
+        action="store_true",
+        help="Render all built-in catalogue scenes.",
+    )
     catalogue_parser.add_argument(
         "--output-root",
         default=None,
@@ -81,6 +90,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--map-name",
         default=None,
         help="Scalar map to use for rendered gallery previews.",
+    )
+    catalogue_parser.add_argument(
+        "--no-gallery",
+        action="store_true",
+        help="Do not write gallery figures when rendering catalogue scenes.",
     )
     catalogue_parser.add_argument(
         "--formats",
@@ -272,33 +286,93 @@ def run_catalogue_command(args: argparse.Namespace) -> int:
         if args.output_root is None:
             raise ValueError("--output-root is required with catalogue --render.")
 
-        result = render_export_gallery(
-            entry.config_path,
-            output_root=args.output_root,
+        return _render_catalogue_entry(
+            entry,
+            output_root=Path(args.output_root),
             map_name=args.map_name,
-            export=True,
-            gallery=True,
             formats=tuple(args.formats),
             dpi=args.dpi,
             overwrite=args.overwrite,
             with_colorbar=args.with_colorbar,
+            gallery=not args.no_gallery,
+            inspect_export=not args.no_inspect_export,
+            strict_export_inspection=args.strict_export_inspection,
         )
 
+    if args.render_all:
+        if args.output_root is None:
+            raise ValueError("--output-root is required with catalogue --render-all.")
+
+        entries = tuple(list_catalogue_entries())
         output_root = Path(args.output_root)
-        print(f"Rendered catalogue scene: {entry.scene_id}")
-        print(f"Selected map: {result.map_name}")
-        print(f"Wrote export: {output_root / 'export'}")
-        if not args.no_inspect_export:
-            exit_code = _print_export_inspection(
-                output_root / "export",
-                strict=args.strict_export_inspection,
+        print(f"Rendering catalogue scenes: {len(entries)}")
+
+        for entry in entries:
+            exit_code = _render_catalogue_entry(
+                entry,
+                output_root=output_root / entry.default_output_name,
+                map_name=args.map_name,
+                formats=tuple(args.formats),
+                dpi=args.dpi,
+                overwrite=args.overwrite,
+                with_colorbar=args.with_colorbar,
+                gallery=not args.no_gallery,
+                inspect_export=not args.no_inspect_export,
+                strict_export_inspection=args.strict_export_inspection,
             )
             if exit_code != 0:
                 return exit_code
-        print(f"Wrote gallery: {output_root / 'gallery'}")
+
         return 0
 
     raise RuntimeError("No catalogue action was selected.")  # pragma: no cover
+
+
+def _render_catalogue_entry(
+    entry,
+    *,
+    output_root: Path,
+    map_name: str | None,
+    formats: tuple[str, ...],
+    dpi: int,
+    overwrite: bool,
+    with_colorbar: bool,
+    gallery: bool,
+    inspect_export: bool,
+    strict_export_inspection: bool,
+) -> int:
+    """Render one catalogue entry and print a compact report."""
+
+    result = render_export_gallery(
+        entry.config_path,
+        output_root=output_root,
+        map_name=map_name,
+        export=True,
+        gallery=gallery,
+        formats=formats,
+        dpi=dpi,
+        overwrite=overwrite,
+        with_colorbar=with_colorbar,
+    )
+
+    print(f"Rendered catalogue scene: {entry.scene_id}")
+    print(f"Selected map: {result.map_name}")
+    print(f"Wrote export: {output_root / 'export'}")
+
+    if inspect_export:
+        exit_code = _print_export_inspection(
+            output_root / "export",
+            strict=strict_export_inspection,
+        )
+        if exit_code != 0:
+            return exit_code
+
+    if result.gallery_written:
+        print(f"Wrote gallery: {output_root / 'gallery'}")
+    else:
+        print("Gallery skipped.")
+
+    return 0
 
 
 def run_validate_config_command(args: argparse.Namespace) -> int:
