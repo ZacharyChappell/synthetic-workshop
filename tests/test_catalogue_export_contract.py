@@ -136,3 +136,41 @@ def test_export_manifest_json_includes_relative_paths(tmp_path: Path) -> None:
     assert {"group", "role", "path", "relative_path", "format"}.issubset(files.columns)
     assert "arrays/labels.npy" in set(files["relative_path"])
     assert "tables/export_manifest.tsv" in set(files["relative_path"])
+
+
+@pytest.mark.parametrize("scene_id", CATALOGUE_SCENE_IDS)
+def test_catalogue_export_manifests_do_not_store_absolute_output_paths(
+    scene_id: str,
+    tmp_path: Path,
+) -> None:
+    scene = render_catalogue_scene(scene_id)
+    manifest = export_scene(scene, tmp_path / scene_id)
+
+    export_manifest_tsv = manifest.tables["export_manifest"].read_text(encoding="utf-8")
+    export_manifest_json = manifest.metadata["export_manifest"].read_text(
+        encoding="utf-8"
+    )
+
+    assert str(manifest.output_root) not in export_manifest_tsv
+    assert str(manifest.output_root) not in export_manifest_json
+    assert str(manifest.output_root.resolve()) not in export_manifest_tsv
+    assert str(manifest.output_root.resolve()) not in export_manifest_json
+
+    payload = read_json(manifest.metadata["export_manifest"])
+
+    assert payload["path_mode"] == "relative_to_export_root"
+    assert payload["output_root"] == "."
+
+    for group_name in ("arrays", "tables", "metadata"):
+        for relative_path in payload[group_name].values():
+            path = Path(str(relative_path))
+            assert not path.is_absolute()
+            assert (manifest.output_root / path).exists()
+
+    for row in payload["files"]:
+        path = Path(str(row["path"]))
+        relative_path = Path(str(row["relative_path"]))
+        assert not path.is_absolute()
+        assert not relative_path.is_absolute()
+        assert path == relative_path
+        assert (manifest.output_root / relative_path).exists()

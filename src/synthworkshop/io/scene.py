@@ -50,12 +50,13 @@ class SceneExportManifest:
             ("metadata", self.metadata),
         ):
             for role, path in paths.items():
+                relative_path = _relative_path(path, self.output_root)
                 rows.append(
                     {
                         "group": group_name,
                         "role": role,
-                        "path": str(path),
-                        "relative_path": _relative_path(path, self.output_root),
+                        "path": relative_path,
+                        "relative_path": relative_path,
                         "format": Path(path).suffix.lstrip("."),
                     }
                 )
@@ -84,10 +85,11 @@ class SceneExportManifest:
         }
 
         return {
-            "output_root": self.output_root,
-            "arrays": dict(self.arrays),
-            "tables": dict(self.tables),
-            "metadata": dict(self.metadata),
+            "path_mode": "relative_to_export_root",
+            "output_root": ".",
+            "arrays": relative_paths["arrays"],
+            "tables": relative_paths["tables"],
+            "metadata": relative_paths["metadata"],
             "relative_paths": relative_paths,
             "files": self.to_dataframe().to_dict(orient="records"),
         }
